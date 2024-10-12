@@ -1,234 +1,38 @@
-"use client";
-
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import NewRoomButton from "./components/NewRoomButton";
+import { collection, doc } from "firebase/firestore";
+import { redirect } from "next/navigation";
 import { db } from "@/db/main";
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  onSnapshot,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
-import { useEffect, useRef, useState } from "react";
 
 export default function Page() {
-  const [remoteStream] = useState<MediaStream | null>(null);
-  const [callId, setCallId] = useState("");
-  const myCamRef = useRef<HTMLVideoElement>(null);
-  const remoteCamRef = useRef<HTMLVideoElement>(null);
-  const [pc, setPC] = useState<RTCPeerConnection>();
-  const [shownCam, setShownCam] = useState(false);
+  const handleNewRoom = async () => {
+    "use server";
 
-  const servers = {
-    iceServers: [
-      {
-        urls: [
-          "stun:stun1.l.google.com:19302",
-          "stun:stun2.l.google.com:19302",
-          "stun:stun.l.google.com:19302",
-          "stun:stun3.l.google.com:19302",
-          "stun:stun4.l.google.com:19302",
-        ],
-      },
-    ],
-    iceCandidatePoolSize: 10,
-  };
-  useEffect(() => {
-    setPC(new RTCPeerConnection(servers));
-  }, []);
-
-  const handleShareCam = async () => {
-    const res = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
-
-    res?.getTracks().forEach((track) => {
-      pc?.addTrack(track, res);
-    });
-
-    // pc.ontrack = (event) => {
-    //   console.log("ontrack");
-
-    //   event.streams[0].getTracks().forEach((track) => {
-    //     remoteStream?.addTrack(track);
-    //     console.log("WIDOSSS");
-    //   });
-    //   remoteCamRef.current!.srcObject = event.streams[0];
-    // };
-
-    myCamRef.current!.srcObject = res;
-    setShownCam(true);
-  };
-
-  const handleCall = async () => {
-    const callsCollection = collection(db, "calls");
-    const callDoc = doc(callsCollection);
+    const calls = collection(db, "calls");
+    const callDoc = doc(calls);
     console.log(callDoc.id);
-    setCallId(callDoc.id);
-
-    const offerCandidates = collection(callDoc, "offerCandidates");
-
-    const answerCandidates = collection(callDoc, "answerCandidates");
-
-    if (pc)
-      pc.onicecandidate = (event) => {
-        if (event.candidate) addDoc(offerCandidates, event.candidate.toJSON());
-        // if (event.candidate) offerCandidates.add(event.candidate.toJSON());
-      };
-
-    const offerDescription = await pc?.createOffer();
-    await pc?.setLocalDescription(offerDescription);
-
-    const offer = {
-      sdp: offerDescription?.sdp,
-      type: offerDescription?.type,
-    };
-
-    await setDoc(callDoc, { offer });
-    // await callDoc.set({ offer });
-    onSnapshot(callDoc, (snapshot) => {
-      // callDoc.onSnapshot((snapshot) => {
-      const data = snapshot.data();
-      if (!pc?.currentRemoteDescription && data?.answer) {
-        const answerDescription = new RTCSessionDescription(data.answer);
-        pc?.setRemoteDescription(answerDescription);
-      }
-    });
-
-    onSnapshot(answerCandidates, (snapshot) => {
-      // answerCandidates.onSnapshot((snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === "added") {
-          const candidate = new RTCIceCandidate(change.doc.data());
-          pc?.addIceCandidate(candidate);
-        }
-      });
-    });
+    redirect("/meet/" + callDoc.id);
   };
-
-  const answerCall = async () => {
-    const callRef = collection(db, "calls");
-    const callDoc = await doc(callRef, callId);
-
-    const answerCandidates = collection(callDoc, "answerCandidates");
-    const offerCandidates = collection(callDoc, "offerCandidates");
-
-    if (pc)
-      pc.onicecandidate = (event) => {
-        if (event.candidate) addDoc(answerCandidates, event.candidate.toJSON());
-      };
-
-    const callData = (await getDoc(callDoc)).data();
-    console.log(callData);
-
-    const offerDescription = callData?.offer;
-
-    await pc?.setRemoteDescription(new RTCSessionDescription(offerDescription));
-
-    const answerDescription = await pc?.createAnswer();
-    await pc?.setLocalDescription(answerDescription);
-
-    const answer = {
-      type: answerDescription?.type,
-      sdp: answerDescription?.sdp,
-    };
-
-    await updateDoc(callDoc, { answer });
-
-    onSnapshot(offerCandidates, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === "added") {
-          const data = change.doc.data();
-          pc?.addIceCandidate(new RTCIceCandidate(data));
-        }
-      });
-    });
-  };
-
-  useEffect(() => {
-    const newPC = new RTCPeerConnection(servers);
-    setPC(newPC);
-  }, []);
-
-  useEffect(() => {
-    if (pc)
-      pc.ontrack = (event) => {
-        console.log("WIDOSSS");
-
-        event.streams[0].getTracks().forEach((track) => {
-          remoteStream?.addTrack(track);
-          remoteCamRef.current!.srcObject = remoteStream;
-          console.log("WIDOSSS");
-        });
-        console.log(event.streams);
-        console.log("pc", pc);
-
-        remoteCamRef.current!.srcObject = event.streams[0];
-      };
-  }, [pc]);
 
   return (
-    <div className="w-full h-screen flex gap-10 p-12 bg-slate-100">
-      <div className="relative rounded-xl p-4 bg-teal-300 shadow-md h-1/3 flex justify-center items-end">
-        <video
-          autoPlay
-          playsInline
-          className="rounded h-full w-full"
-          ref={myCamRef}
-          muted
-        />
-        <div
-          className="w-5/6 absolute p-4 flex justify-between bottom-5 rounded-xl"
-          style={{ backgroundColor: "rgba(255,255,255, 0.5)" }}
-        >
-          <div className="text-3xl">Ты бля</div>
-          {!shownCam && (
-            <button
-              onClick={handleShareCam}
-              className="bg-blue-500  hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >
-              Дать свою камеру
-            </button>
-          )}
-        </div>
-      </div>
-      <div className="relative rounded-xl p-4 bg-teal-300 shadow-md h-1/3 flex justify-center items-end">
-        <video
-          autoPlay
-          playsInline
-          className="rounded h-full w-full"
-          ref={remoteCamRef}
-        />
-        <div className="absolute">Кент бля</div>
-      </div>
-
-      <div>
-        <button
-          onClick={handleCall}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          {" "}
-          Создать звонок{" "}
-        </button>
-
-        <div>
-          <input
-            value={callId}
-            onChange={(e) => setCallId(e.target.value)}
-            style={{ width: "200px" }}
-            placeholder="Введи айдишник тут"
-            type="text"
-          />
-          <button
-            onClick={() => answerCall()}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Принять звонок
-          </button>
-        </div>
-      </div>
+    <div className="flex min-h-screen flex-col items-center gap-5 justify-start p-24 bg-slate-100">
+      <Card>
+        <CardHeader>
+          <h1 className="text-xl font-bold  p-10 rounded-2xl">
+            шалапай тебе надо законектиться или создать?
+          </h1>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col">
+            <NewRoomButton action={handleNewRoom} />
+            <Button variant="ghost">Bro законектиться к своим мужикам</Button>
+            <Button variant="ghost">
+              Man... Мне бы в клан в World Of Tanks зайти а не всё это вот{" "}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
