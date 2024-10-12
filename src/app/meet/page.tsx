@@ -17,7 +17,7 @@ export default function Page() {
   const [callId, setCallId] = useState("");
   const myCamRef = useRef<HTMLVideoElement>(null);
   const remoteCamRef = useRef<HTMLVideoElement>(null);
-  // const [pc, setPC] = useState<RTCPeerConnection>();
+  const [pc, setPC] = useState<RTCPeerConnection>();
 
   const servers = {
     iceServers: [
@@ -25,15 +25,17 @@ export default function Page() {
         urls: [
           "stun:stun1.l.google.com:19302",
           "stun:stun2.l.google.com:19302",
+          "stun:stun.l.google.com:19302",
+          "stun:stun3.l.google.com:19302",
+          "stun:stun4.l.google.com:19302",
         ],
       },
     ],
     iceCandidatePoolSize: 10,
   };
-  const pc = new RTCPeerConnection(servers);
-  // useEffect(() => {
-  //   setPC(new RTCPeerConnection(servers));
-  // }, []);
+  useEffect(() => {
+    setPC(new RTCPeerConnection(servers));
+  }, []);
 
   const handleShareCam = async () => {
     const res = await navigator.mediaDevices.getUserMedia({
@@ -42,7 +44,7 @@ export default function Page() {
     });
 
     res?.getTracks().forEach((track) => {
-      pc.addTrack(track, res);
+      pc?.addTrack(track, res);
     });
 
     // pc.ontrack = (event) => {
@@ -68,17 +70,18 @@ export default function Page() {
 
     const answerCandidates = collection(callDoc, "answerCandidates");
 
-    pc.onicecandidate = (event) => {
-      if (event.candidate) addDoc(offerCandidates, event.candidate.toJSON());
-      // if (event.candidate) offerCandidates.add(event.candidate.toJSON());
-    };
+    if (pc)
+      pc.onicecandidate = (event) => {
+        if (event.candidate) addDoc(offerCandidates, event.candidate.toJSON());
+        // if (event.candidate) offerCandidates.add(event.candidate.toJSON());
+      };
 
-    const offerDescription = await pc.createOffer();
-    await pc.setLocalDescription(offerDescription);
+    const offerDescription = await pc?.createOffer();
+    await pc?.setLocalDescription(offerDescription);
 
     const offer = {
-      sdp: offerDescription.sdp,
-      type: offerDescription.type,
+      sdp: offerDescription?.sdp,
+      type: offerDescription?.type,
     };
 
     await setDoc(callDoc, { offer });
@@ -86,9 +89,9 @@ export default function Page() {
     onSnapshot(callDoc, (snapshot) => {
       // callDoc.onSnapshot((snapshot) => {
       const data = snapshot.data();
-      if (!pc.currentRemoteDescription && data?.answer) {
+      if (!pc?.currentRemoteDescription && data?.answer) {
         const answerDescription = new RTCSessionDescription(data.answer);
-        pc.setRemoteDescription(answerDescription);
+        pc?.setRemoteDescription(answerDescription);
       }
     });
 
@@ -97,7 +100,7 @@ export default function Page() {
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {
           const candidate = new RTCIceCandidate(change.doc.data());
-          pc.addIceCandidate(candidate);
+          pc?.addIceCandidate(candidate);
         }
       });
     });
@@ -110,23 +113,24 @@ export default function Page() {
     const answerCandidates = collection(callDoc, "answerCandidates");
     const offerCandidates = collection(callDoc, "offerCandidates");
 
-    pc.onicecandidate = (event) => {
-      if (event.candidate) addDoc(answerCandidates, event.candidate.toJSON());
-    };
+    if (pc)
+      pc.onicecandidate = (event) => {
+        if (event.candidate) addDoc(answerCandidates, event.candidate.toJSON());
+      };
 
     const callData = (await getDoc(callDoc)).data();
     console.log(callData);
 
     const offerDescription = callData?.offer;
 
-    await pc.setRemoteDescription(new RTCSessionDescription(offerDescription));
+    await pc?.setRemoteDescription(new RTCSessionDescription(offerDescription));
 
-    const answerDescription = await pc.createAnswer();
-    await pc.setLocalDescription(answerDescription);
+    const answerDescription = await pc?.createAnswer();
+    await pc?.setLocalDescription(answerDescription);
 
     const answer = {
-      type: answerDescription.type,
-      sdp: answerDescription.sdp,
+      type: answerDescription?.type,
+      sdp: answerDescription?.sdp,
     };
 
     await updateDoc(callDoc, { answer });
@@ -135,27 +139,33 @@ export default function Page() {
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {
           const data = change.doc.data();
-          pc.addIceCandidate(new RTCIceCandidate(data));
+          pc?.addIceCandidate(new RTCIceCandidate(data));
         }
       });
     });
   };
 
   useEffect(() => {
-    pc.ontrack = (event) => {
-      console.log("WIDOSSS");
-
-      event.streams[0].getTracks().forEach((track) => {
-        remoteStream?.addTrack(track);
-        remoteCamRef.current!.srcObject = remoteStream;
-        console.log("WIDOSSS");
-      });
-      console.log(event.streams);
-      console.log(pc);
-
-      remoteCamRef.current!.srcObject = event.streams[0];
-    };
+    const newPC = new RTCPeerConnection(servers);
+    setPC(newPC);
   }, []);
+
+  useEffect(() => {
+    if (pc)
+      pc.ontrack = (event) => {
+        console.log("WIDOSSS");
+
+        event.streams[0].getTracks().forEach((track) => {
+          remoteStream?.addTrack(track);
+          remoteCamRef.current!.srcObject = remoteStream;
+          console.log("WIDOSSS");
+        });
+        console.log(event.streams);
+        console.log("pc", pc);
+
+        remoteCamRef.current!.srcObject = event.streams[0];
+      };
+  }, [pc]);
 
   return (
     <div className="w-full h-screen flex gap-10 p-12">
