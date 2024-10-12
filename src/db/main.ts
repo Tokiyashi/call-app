@@ -1,6 +1,5 @@
 // Import the functions you need from the SDKs you need
-import { getApp, getApps, initializeApp } from "firebase/app";
-import firebase from "firebase/compat/app";
+import { getApps, initializeApp } from "firebase/app";
 import { collection, getFirestore } from "firebase/firestore";
 // import { getAnalytics } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use

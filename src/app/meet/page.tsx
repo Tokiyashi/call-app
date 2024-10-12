@@ -7,14 +7,13 @@ import {
   doc,
   getDoc,
   onSnapshot,
-  query,
   setDoc,
   updateDoc,
 } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 
 export default function Page() {
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [remoteStream] = useState<MediaStream | null>(null);
   const [callId, setCallId] = useState("");
   const myCamRef = useRef<HTMLVideoElement>(null);
   const remoteCamRef = useRef<HTMLVideoElement>(null);
@@ -30,7 +29,7 @@ export default function Page() {
     ],
     iceCandidatePoolSize: 10,
   };
-  const [pc, setPC] = useState(new RTCPeerConnection(servers));
+  const [pc] = useState(new RTCPeerConnection(servers));
 
   const handleShareCam = async () => {
     const res = await navigator.mediaDevices.getUserMedia({
