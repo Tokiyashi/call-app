@@ -17,6 +17,7 @@ export default function Page() {
   const [callId, setCallId] = useState("");
   const myCamRef = useRef<HTMLVideoElement>(null);
   const remoteCamRef = useRef<HTMLVideoElement>(null);
+  // const [pc, setPC] = useState<RTCPeerConnection>();
 
   const servers = {
     iceServers: [
@@ -29,7 +30,10 @@ export default function Page() {
     ],
     iceCandidatePoolSize: 10,
   };
-  const [pc] = useState(new RTCPeerConnection(servers));
+  const pc = new RTCPeerConnection(servers);
+  // useEffect(() => {
+  //   setPC(new RTCPeerConnection(servers));
+  // }, []);
 
   const handleShareCam = async () => {
     const res = await navigator.mediaDevices.getUserMedia({
