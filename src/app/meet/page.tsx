@@ -18,6 +18,7 @@ export default function Page() {
   const myCamRef = useRef<HTMLVideoElement>(null);
   const remoteCamRef = useRef<HTMLVideoElement>(null);
   const [pc, setPC] = useState<RTCPeerConnection>();
+  const [shownCam, setShownCam] = useState(false);
 
   const servers = {
     iceServers: [
@@ -58,6 +59,7 @@ export default function Page() {
     // };
 
     myCamRef.current!.srcObject = res;
+    setShownCam(true);
   };
 
   const handleCall = async () => {
@@ -168,28 +170,38 @@ export default function Page() {
   }, [pc]);
 
   return (
-    <div className="w-full h-screen flex gap-10 p-12">
-      <div className="bg-purple-400 rounded-xl w-1/2 h-1/3 flex justify-center items-end">
+    <div className="w-full h-screen flex gap-10 p-12 bg-slate-100">
+      <div className="relative rounded-xl p-4 bg-teal-300 shadow-md h-1/3 flex justify-center items-end">
         <video
           autoPlay
           playsInline
           className="rounded h-full w-full"
           ref={myCamRef}
+          muted
         />
-        <button
-          onClick={handleShareCam}
-          className="bg-blue-500 absolute hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        <div
+          className="w-5/6 absolute p-4 flex justify-between bottom-5 rounded-xl"
+          style={{ backgroundColor: "rgba(255,255,255, 0.5)" }}
         >
-          Дать свою камеру
-        </button>
+          <div className="text-3xl">Ты бля</div>
+          {!shownCam && (
+            <button
+              onClick={handleShareCam}
+              className="bg-blue-500  hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Дать свою камеру
+            </button>
+          )}
+        </div>
       </div>
-      <div className="bg-purple-400 rounded-xl w-1/2 h-1/3">
+      <div className="relative rounded-xl p-4 bg-teal-300 shadow-md h-1/3 flex justify-center items-end">
         <video
           autoPlay
           playsInline
           className="rounded h-full w-full"
           ref={remoteCamRef}
         />
+        <div className="absolute">Кент бля</div>
       </div>
 
       <div>
