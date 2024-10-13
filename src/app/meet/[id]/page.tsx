@@ -207,17 +207,18 @@ export default function Page() {
           </button>
         </div>
       </div>
-      {remoteCamRef.current?.srcObject && (
-        <div className="relative rounded-xl bg-black border-primary border-8 shadow-md h-1/3 flex justify-center items-end">
-          <video
-            autoPlay
-            playsInline
-            className="rounded-md h-full w-full"
-            ref={remoteCamRef}
-          />
-          <div className="absolute">Кент</div>
-        </div>
-      )}
+      <div
+        style={{ display: remoteCamRef.current?.srcObject ? "block" : "none" }}
+        className="relative rounded-xl bg-black border-primary border-8 shadow-md h-1/3 flex justify-center items-end"
+      >
+        <video
+          autoPlay
+          playsInline
+          className="rounded-md h-full w-full"
+          ref={remoteCamRef}
+        />
+        <div className="absolute">Кент</div>
+      </div>
       <div>
         <button
           onClick={handleCall}
