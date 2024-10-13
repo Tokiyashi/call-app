@@ -152,7 +152,7 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    if (pc)
+    if (pc) {
       pc.ontrack = (event) => {
         console.log("WIDOSSS");
 
@@ -166,11 +166,21 @@ export default function Page() {
 
         remoteCamRef.current!.srcObject = event.streams[0];
       };
+
+      pc.onconnectionstatechange = (event) => {
+        if (pc.connectionState === "connected") {
+          console.log("connected");
+        }
+        if (pc.connectionState === "disconnected") {
+          console.log("disconnected");
+        }
+      };
+    }
   }, [pc]);
 
   return (
     <div className="w-full h-screen flex gap-10 p-12">
-      <div className="relative rounded-xl bg-black border-yellow-300 border-8 shadow-md h-1/3 flex justify-center items-end">
+      <div className="relative rounded-xl bg-black border-primary border-8 shadow-md h-1/3 flex justify-center items-end">
         <video
           autoPlay
           playsInline
@@ -197,23 +207,23 @@ export default function Page() {
           </button>
         </div>
       </div>
-      <div className="relative rounded-xl bg-black border-teal-200 border-8 shadow-md h-1/3 flex justify-center items-end">
-        <video
-          autoPlay
-          playsInline
-          className="rounded-md h-full w-full"
-          ref={remoteCamRef}
-        />
-        <div className="absolute">Кент</div>
-      </div>
-
+      {remoteCamRef.current?.srcObject && (
+        <div className="relative rounded-xl bg-black border-primary border-8 shadow-md h-1/3 flex justify-center items-end">
+          <video
+            autoPlay
+            playsInline
+            className="rounded-md h-full w-full"
+            ref={remoteCamRef}
+          />
+          <div className="absolute">Кент</div>
+        </div>
+      )}
       <div>
         <button
           onClick={handleCall}
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
-          {" "}
-          Создать звонок{" "}
+          Создать звонок
         </button>
 
         <div>
