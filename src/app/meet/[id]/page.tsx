@@ -167,7 +167,7 @@ export default function Page() {
         remoteCamRef.current!.srcObject = event.streams[0];
       };
 
-      pc.onconnectionstatechange = (event) => {
+      pc.onconnectionstatechange = () => {
         if (pc.connectionState === "connected") {
           console.log("connected");
         }
