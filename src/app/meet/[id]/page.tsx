@@ -1,6 +1,12 @@
 "use client";
 
+import { MdEmojiEmotions } from "react-icons/md";
+import SpeakerCard from "@/components/SpeakerCard/SpeakerCard";
 import { db } from "@/db/main";
+import { IoIosCall } from "react-icons/io";
+import { IoMicOffSharp } from "react-icons/io5";
+import { IoVideocamOff } from "react-icons/io5";
+
 import {
   addDoc,
   collection,
@@ -12,13 +18,14 @@ import {
 } from "firebase/firestore";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function Page() {
   const [remoteStream] = useState<MediaStream | null>(null);
   const myCamRef = useRef<HTMLVideoElement>(null);
   const remoteCamRef = useRef<HTMLVideoElement>(null);
   const [pc, setPC] = useState<RTCPeerConnection>();
-  const [shownCam, setShownCam] = useState(false);
+  // const [shownCam, setShownCam] = useState(false);
 
   const { id: callId } = useParams();
 
@@ -36,11 +43,10 @@ export default function Page() {
     ],
     iceCandidatePoolSize: 10,
   };
-  useEffect(() => {
-    setPC(new RTCPeerConnection(servers));
-  }, []);
 
-  const handleShareCam = async () => {
+  const init = async () => {
+    const newPC = new RTCPeerConnection(servers);
+    setPC(newPC);
     const res = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: true,
@@ -50,18 +56,24 @@ export default function Page() {
       pc?.addTrack(track, res);
     });
 
-    // pc.ontrack = (event) => {
-    //   console.log("ontrack");
-
-    //   event.streams[0].getTracks().forEach((track) => {
-    //     remoteStream?.addTrack(track);
-    //     console.log("WIDOSSS");
-    //   });
-    //   remoteCamRef.current!.srcObject = event.streams[0];
-    // };
-
     myCamRef.current!.srcObject = res;
-    setShownCam(true);
+    // setShownCam(true);
+  };
+
+  useEffect(() => {
+    init();
+  }, []);
+
+  const handleShareCam = async () => {
+    // const res = await navigator.mediaDevices.getUserMedia({
+    //   video: true,
+    //   audio: true,
+    // });
+    // res?.getTracks().forEach((track) => {
+    //   pc?.addTrack(track, res);
+    // });
+    // myCamRef.current!.srcObject = res;
+    // setShownCam(true);
   };
 
   const handleCall = async () => {
@@ -74,7 +86,6 @@ export default function Page() {
     if (pc)
       pc.onicecandidate = (event) => {
         if (event.candidate) addDoc(offerCandidates, event.candidate.toJSON());
-        // if (event.candidate) offerCandidates.add(event.candidate.toJSON());
       };
 
     const offerDescription = await pc?.createOffer();
@@ -86,9 +97,7 @@ export default function Page() {
     };
 
     await setDoc(callDoc, { offer });
-    // await callDoc.set({ offer });
     onSnapshot(callDoc, (snapshot) => {
-      // callDoc.onSnapshot((snapshot) => {
       const data = snapshot.data();
       if (!pc?.currentRemoteDescription && data?.answer) {
         const answerDescription = new RTCSessionDescription(data.answer);
@@ -97,7 +106,6 @@ export default function Page() {
     });
 
     onSnapshot(answerCandidates, (snapshot) => {
-      // answerCandidates.onSnapshot((snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {
           const candidate = new RTCIceCandidate(change.doc.data());
@@ -179,60 +187,45 @@ export default function Page() {
   }, [pc]);
 
   return (
-    <div className="w-full h-screen flex gap-10 p-12">
-      <div className="relative rounded-xl bg-black border-primary border-8 shadow-md h-1/3 flex justify-center items-end">
-        <video
-          autoPlay
-          playsInline
-          className="rounded-md h-full w-full"
-          ref={myCamRef}
-          muted
-        />
-        <div
-          className="w-5/6 absolute p-4 flex justify-between bottom-5 rounded-xl"
-          style={{ backgroundColor: "rgba(255,255,255, 0.5)" }}
-        >
-          <div className="text-3xl">Ты</div>
-          {!shownCam && (
-            <button
-              onClick={handleShareCam}
-              className="bg-blue-500  hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >
-              Дать свою камеру
-            </button>
-          )}
-
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Вольнуть себе пиздак
-          </button>
+    <div className="flex w-full h-full gap-5">
+      <div className="flex w-full h-full flex-col">
+        <div className="w-full h-full max-w-full justify-between gap-10">
+          <div className="rounded-xl relative h-5/6 overflow-hidden flex justify-center items-end">
+            <video
+              autoPlay
+              playsInline
+              className="rounded-md w-full"
+              ref={myCamRef}
+              muted
+            />
+            <div className="absolute top-10 right-5">
+              <SpeakerCard remoteCamRef={remoteCamRef} />
+            </div>
+          </div>
+          <div className="flex h-24 mt-5 p-4 gap-4 items-center justify-center bg-white rounded-lg">
+            <Button variant="destructive" className="p-6">
+              <IoIosCall />
+            </Button>
+            <Button className="bg-slate-200 p-6 ">
+              <IoVideocamOff />
+            </Button>
+            <Button className="bg-slate-200 p-6 ">
+              <IoMicOffSharp />
+            </Button>
+            {/* <IoVideocam /> */}
+            <Button className="bg-slate-200 p-6 ">
+              <MdEmojiEmotions />
+            </Button>
+            <Button className="p-6" onClick={handleCall}>
+              Создать звонок
+            </Button>
+            <Button className="p-6" onClick={() => answerCall()}>
+              Принять звонок
+            </Button>
+          </div>
         </div>
       </div>
-      <div className="relative rounded-xl bg-black border-primary border-8 shadow-md h-1/3 flex justify-center items-end">
-        <video
-          autoPlay
-          playsInline
-          className="rounded-md h-full w-full"
-          ref={remoteCamRef}
-        />
-        <div className="absolute">Кент</div>
-      </div>
-      <div>
-        <button
-          onClick={handleCall}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Создать звонок
-        </button>
-
-        <div>
-          <button
-            onClick={() => answerCall()}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Принять звонок
-          </button>
-        </div>
-      </div>
+      <div className="bg-white rounded-2xl p-10 w-1/3">чатик</div>
     </div>
   );
 }

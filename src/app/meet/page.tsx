@@ -27,9 +27,6 @@ export default function Page() {
           <div className="flex flex-col">
             <NewRoomButton action={handleNewRoom} />
             <Button variant="ghost">Bro законектиться к своим мужикам</Button>
-            <Button variant="ghost">
-              Man... Мне бы в клан в World Of Tanks зайти а не всё это вот{" "}
-            </Button>
           </div>
         </CardContent>
       </Card>
