@@ -64,17 +64,17 @@ export default function Page() {
     init();
   }, []);
 
-  const handleShareCam = async () => {
-    // const res = await navigator.mediaDevices.getUserMedia({
-    //   video: true,
-    //   audio: true,
-    // });
-    // res?.getTracks().forEach((track) => {
-    //   pc?.addTrack(track, res);
-    // });
-    // myCamRef.current!.srcObject = res;
-    // setShownCam(true);
-  };
+  // const handleShareCam = async () => {
+  // const res = await navigator.mediaDevices.getUserMedia({
+  //   video: true,
+  //   audio: true,
+  // });
+  // res?.getTracks().forEach((track) => {
+  //   pc?.addTrack(track, res);
+  // });
+  // myCamRef.current!.srcObject = res;
+  // setShownCam(true);
+  // };
 
   const handleCall = async () => {
     const callDoc = await doc(db, "calls", callId.toString());
