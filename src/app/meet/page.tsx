@@ -16,7 +16,7 @@ export default function Page() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center gap-5 justify-start p-24 bg-slate-100">
+    <div className="flex min-h-screen flex-col items-center gap-5 justify-start p-24 ">
       <Card>
         <CardHeader>
           <h1 className="text-xl font-bold  p-10 rounded-2xl">

@@ -47,22 +47,30 @@ export default function Page() {
   const init = async () => {
     const newPC = new RTCPeerConnection(servers);
     setPC(newPC);
+  };
+
+  const initWebcam = async () => {
+    if (!pc) {
+      return;
+    }
     const res = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: true,
     });
-
     res?.getTracks().forEach((track) => {
       pc?.addTrack(track, res);
     });
 
     myCamRef.current!.srcObject = res;
-    // setShownCam(true);
   };
 
   useEffect(() => {
     init();
   }, []);
+
+  useEffect(() => {
+    initWebcam();
+  }, [pc]);
 
   // const handleShareCam = async () => {
   // const res = await navigator.mediaDevices.getUserMedia({
